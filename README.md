@@ -81,9 +81,16 @@ Flow of Data Pipeline tasks that would be performed are:
     ![Dumped data to Minio](png/ss/minio.png)
 
   - DAG Graphs
+    Full DAG 
     ![Full DAG](png/ss/dag-graphs-1.png)
+
+    Extract TaskGroup
     ![Extract DAG](png/ss/dag-graphs-2.png)
+
+    Load TaskGroup
     ![Load DAG](png/ss/dag-graphs-3.png)
+
+    Transform Taskgroup
     ![Transform DAG](png/ss/dag-graphs-4.png)
 
 
