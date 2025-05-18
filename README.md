@@ -3,14 +3,23 @@
 
 This project orchestrated an automated data pipeline that extracts data from a source database, stores it temporarily in an object store, and loads it into a data warehouse. The pipeline will be orchestrated using Apache Airflow. Apache Airflow is used for the scheduling and orchestration of data pipelines or workflows. Orchestration of data pipelines refers to the sequencing, coordination, scheduling, and managing of complex data pipelines from diverse sources. Data used in this project is from simulated flight booking system. 
 
-Data Pipeline tasks that would be performed are:
+## Architecture Description
+![Architecture](png/ss/architecture.png)
+- Docker: a containerization platform, used to manage and deploy data pipelines and applications. Services composed: airflow, Posgres as Data Source, Posgres as Data Warehouse and MinIO.
+- Minio: MinIO as data Lake. stored data extracted from data source before processed to data warehouse.
+- PosgreSQL: Data source is simulated and pre-loaded as part of the Docker setup. PostgreSQL also used as datawarehouse 
+- Airflow: Apache Airflow is used for the scheduling and orchestration of data pipelines or workflows. 
+
+
+## Pipeline Flow
+![Piepline Flow ](png/ss/flow.png)
+
+
+Flow of Data Pipeline tasks that would be performed are:
 - Extract: Extract data from data source (postgresSQL) and dump it to object storage (minio)
 - Load: Extract data from minio object storage and upsert into a staging database (postgreSQL)
 - Transform: Transforming data from staging data to datawarehouse, using SQL syntax.
 
-## Architecture Description
-
-## Pipeline Flow
 
 ## How to use this project?
 1. Preparations
@@ -66,10 +75,20 @@ Data Pipeline tasks that would be performed are:
 
 ### 4. Run DAG :
 
-  - Screenshot of Projects
-
   - Dumped data to Minio
+    ![Dumped data to Minio](png/ss/minio.png)
 
   - DAG Graphs
+    ![Full DAG](png/ss/dag-graphs-1.png)
+    ![Extract DAG](png/ss/dag-graphs-2.png)
+    ![Load DAG](png/ss/dag-graphs-3.png)
+    ![Transform DAG](png/ss/dag-graphs-4.png)
 
-  - Example of Details Task runs 
+
+  - Example of Details Task runs
+    ![Detail 1](png/ss/detail-1.png)
+    ![Detail 2](png/ss/detail-2.png)
+    ![Detail 3](png/ss/detail-3.png)
+    ![Detail 4](png/ss/detail-4.png)
+    ![Detail 5](png/ss/detail-5.png)
+
