@@ -1,7 +1,12 @@
 
 ## Project Overview 
 
-**Will be updated**
+This project orchestrated an automated data pipeline that extracts data from a source database, stores it temporarily in an object store, and loads it into a data warehouse. The pipeline will be orchestrated using Apache Airflow. Apache Airflow is used for the scheduling and orchestration of data pipelines or workflows. Orchestration of data pipelines refers to the sequencing, coordination, scheduling, and managing of complex data pipelines from diverse sources. Data used in this project is from simulated flight booking system. 
+
+Data Pipeline tasks that would be performed are:
+- Extract: Extract data from data source (postgresSQL) and dump it to object storage (minio)
+- Load: Extract data from minio object storage and upsert into a staging database (postgreSQL)
+- Transform: Transforming data from staging data to datawarehouse, using SQL syntax.
 
 ## Architecture Description
 
