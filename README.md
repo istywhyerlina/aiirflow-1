@@ -20,6 +20,8 @@ Flow of Data Pipeline tasks that would be performed are:
 - Load: Extract data from minio object storage and upsert into a staging database (postgreSQL)
 - Transform: Transforming data from staging data to datawarehouse, using SQL syntax.
 
+  Data Pipeline is orchestrated with Airflow, using PythonOperator for Extract and Load taskgroup, and PosgresOperator for Transform taskgroup. Extract task group can be executed parallel while Load and Transform traskgroup excecuted sequentially (please check DAG picture in RUN DAG section)
+
 
 ## How to use this project?
 1. Preparations
