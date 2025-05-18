@@ -1,6 +1,8 @@
 
 ## Project Overview 
 
+**Will be updated**
+
 ## Architecture Description
 
 ## Pipeline Flow
@@ -9,7 +11,7 @@
 1. Preparations
 2. Run Docker Compose
 
-**Make sure you're using the correct Branch! This one is using branch `week-4`**
+
 
 ### 1. Preparations
 - **Clone repo** :
