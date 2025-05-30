@@ -4,17 +4,18 @@ from airflow.operators.postgres_operator import PostgresOperator
 from datetime import datetime
 from helper.minio import MinioClient
 from helper.read_sql import read_sql_file
-from flights_data_pipeline_1.tasks.extract import Extract
-from flights_data_pipeline_1.tasks.load import Load
+from flights_data_pipeline.tasks.extract import Extract
+from flights_data_pipeline.tasks.load import Load
 
 
 @dag(
-    dag_id = 'flights_data_pipeline_1',
-    start_date = datetime.now(),
+    dag_id = 'flights_data_pipeline',
+    start_date = datetime.strptime('2025-01-01', 'yyyy-dd-mm'),
     schedule = "@daily",
-    catchup = False
+    catchup = True,
+    max_active_runs = 1
 )
-def flights_data_pipeline_1():
+def flights_data_pipeline():
     @task
     def create_bucket():
         minio_client = MinioClient._get()
@@ -144,7 +145,7 @@ def flights_data_pipeline_1():
 
     @task_group
     def transform():
-        sql_dim_aircrafts = read_sql_file(f'flights_data_pipeline_1/query_transform/dim_aircrafts.sql')
+        sql_dim_aircrafts = read_sql_file(f'flights_data_pipeline/query_transform/dim_aircrafts.sql')
         transform_dim_aircrafts = PostgresOperator(
             task_id = 'transform_dim_aircrafts',
             sql = sql_dim_aircrafts,
@@ -152,21 +153,21 @@ def flights_data_pipeline_1():
             autocommit = True)
         
 
-        sql_dim_airport = read_sql_file(f'flights_data_pipeline_1/query_transform/dim_airport.sql')
+        sql_dim_airport = read_sql_file(f'flights_data_pipeline/query_transform/dim_airport.sql')
         transform_dim_airport = PostgresOperator(
             task_id = 'transform_dim_airport',
             sql = sql_dim_airport,
             postgres_conn_id = 'dwh',
             autocommit = True)
         
-        sql_dim_passenger = read_sql_file(f'flights_data_pipeline_1/query_transform/dim_passenger.sql')
+        sql_dim_passenger = read_sql_file(f'flights_data_pipeline/query_transform/dim_passenger.sql')
         transform_dim_passenger = PostgresOperator(
             task_id = 'transform_dim_passenger',
             sql = sql_dim_passenger,
             postgres_conn_id = 'dwh',
             autocommit = True)
         
-        sql_dim_seat = read_sql_file(f'flights_data_pipeline_1/query_transform/dim_seat.sql')
+        sql_dim_seat = read_sql_file(f'flights_data_pipeline/query_transform/dim_seat.sql')
         transform_dim_seat = PostgresOperator(
             task_id = 'transform_dim_seat',
             sql = sql_dim_seat,
@@ -174,28 +175,28 @@ def flights_data_pipeline_1():
             autocommit = True)
         
 
-        sql_fct_boarding_pass = read_sql_file(f'flights_data_pipeline_1/query_transform/fct_boarding_pass.sql')
+        sql_fct_boarding_pass = read_sql_file(f'flights_data_pipeline/query_transform/fct_boarding_pass.sql')
         transform_fct_boarding_pass = PostgresOperator(
             task_id = 'transform_fct_boarding_pass',
             sql = sql_fct_boarding_pass,
             postgres_conn_id = 'dwh',
             autocommit = True)
         
-        sql_fct_booking_ticket = read_sql_file(f'flights_data_pipeline_1/query_transform/fct_booking_ticket.sql')
+        sql_fct_booking_ticket = read_sql_file(f'flights_data_pipeline/query_transform/fct_booking_ticket.sql')
         transform_fct_booking_ticket = PostgresOperator(
             task_id = 'transform_fct_booking_ticket',
             sql = sql_fct_booking_ticket,
             postgres_conn_id = 'dwh',
             autocommit = True)
         
-        sql_fct_flight_activity = read_sql_file(f'flights_data_pipeline_1/query_transform/fct_flight_activity.sql')
+        sql_fct_flight_activity = read_sql_file(f'flights_data_pipeline/query_transform/fct_flight_activity.sql')
         transform_fct_flight_activity = PostgresOperator(
             task_id = 'transform_fct_flight_activity',
             sql = sql_fct_flight_activity,
             postgres_conn_id = 'dwh',
             autocommit = True)
         
-        sql_fct_seat_occupied_daily = read_sql_file(f'flights_data_pipeline_1/query_transform/fct_seat_occupied_daily.sql')
+        sql_fct_seat_occupied_daily = read_sql_file(f'flights_data_pipeline/query_transform/fct_seat_occupied_daily.sql')
         transform_fct_seat_occupied_daily = PostgresOperator(
             task_id = 'transform_fct_seat_occupied_daily',
             sql = sql_fct_seat_occupied_daily,
@@ -207,4 +208,4 @@ def flights_data_pipeline_1():
 
     create_bucket() >> extract() >> load() >> transform()
 
-flights_data_pipeline_1()
+flights_data_pipeline()
