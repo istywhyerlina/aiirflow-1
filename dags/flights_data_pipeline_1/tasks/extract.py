@@ -11,7 +11,7 @@ class Extract:
 
         df = Execute._get_dataframe(
             connection_id = 'src',
-            query_path = f'flights_data_pipeline/query/get_{table_name}.sql'
+            query_path = f'flights_data_pipeline_1/query/get_{table_name}.sql'
         )
 
 
@@ -33,7 +33,7 @@ class Extract:
 
         df = Execute._get_dataframe(
             connection_id = 'src',
-            query_path = 'flights_data_pipeline/query/get_aircrafts_data.sql'
+            query_path = 'flights_data_pipeline_1/query/get_aircrafts_data.sql'
         )
 
 
@@ -55,7 +55,7 @@ class Extract:
 
         df = Execute._get_dataframe(
             connection_id = 'src',
-            query_path = 'flights_data_pipeline/query/get_airports_data.sql'
+            query_path = 'flights_data_pipeline_1/query/get_airports_data.sql'
         )
 
 

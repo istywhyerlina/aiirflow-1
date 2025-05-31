@@ -33,6 +33,6 @@ class Load:
 
         Execute._insert_dataframe(
                 connection_id = "dwh", 
-                query_path =  f'flights_data_pipeline/query/insert_{table_name}.sql',
+                query_path =  f'flights_data_pipeline_1/query/insert_{table_name}.sql',
                 dataframe = df
         )
