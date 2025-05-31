@@ -4,16 +4,38 @@ from airflow.operators.postgres_operator import PostgresOperator
 from datetime import datetime
 from helper.minio import MinioClient
 from helper.read_sql import read_sql_file
-from flights_data_pipeline.tasks.extract import Extract
-from flights_data_pipeline.tasks.load import Load
+from helper.callbacks.slack_notifier import slack_notifier
+from flights_data_pipeline.tasks.staging.components.extract import Extract
+from flights_data_pipeline.tasks.staging.components.Load import Load
+from airflow.models import Variable
+import json
+from airflow.exceptions import AirflowSkipException
+from datetime import timedelta
+from airflow.models.taskinstance import TaskInstance
+import pendulum
+
+
+
+
+default_args = {
+    'on_failure_callback': slack_notifier
+}
+
+incremental = eval(Variable.get('incremental'))
+#tables_to_extract= ['aircrafts_data', 'airports_data', 'bookings', 'tickets', 'seats', 'flights', 'ticket_flights', 'boarding_passes']
+tables_to_extract=eval(Variable.get('tables_to_extract'))
+tables_to_transform=eval(Variable.get('tables_to_transform'))
+tables_to_load = eval(Variable.get('tables_to_load'))
+keys = list(tables_to_load.keys())
 
 
 @dag(
     dag_id = 'flights_data_pipeline',
-    start_date = datetime.strptime('2025-01-01', 'yyyy-dd-mm'),
+    start_date = datetime.strptime('2025-01-01', '%Y-%m-%d'),
     schedule = "@daily",
     catchup = True,
-    max_active_runs = 1
+    max_active_runs = 1,
+    default_args=default_args
 )
 def flights_data_pipeline():
     @task
@@ -26,184 +48,54 @@ def flights_data_pipeline():
 
     @task_group
     def extract():
-        extract_aircrafts_data = PythonOperator(
-            task_id = 'extract_aircrafts_data',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'aircrafts_data'},
+        for table_name in tables_to_extract:
+            current_task = PythonOperator(
+                task_id = f'extract_{table_name}',
+                python_callable = Extract._extract_src,
+                op_kwargs={'table_name': table_name, 'incremental': incremental}
+                )
+            current_task
 
-        )
-
-        extract_airports_data = PythonOperator(
-            task_id = 'extract_airports_data',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'airports_data'},
-        )
-
-        extract_boarding_passes = PythonOperator(
-            task_id = 'extract_boarding_passes',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'boarding_passes'},
-        )
-
-        extract_bookings = PythonOperator(
-            task_id = 'extract_bookings',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'bookings'},
-        )
-
-        extract_flights = PythonOperator(
-            task_id = 'extract_flights',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'flights'},
-        )
-
-        extract_seats = PythonOperator(
-            task_id = 'extract_seats',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'seats'},
-        )
-
-        extract_ticket_flights = PythonOperator(
-            task_id = 'extract_ticket_flights',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'ticket_flights'},
-        )
-
-        extract_tickets = PythonOperator(
-            task_id = 'extract_tickets',
-            python_callable = Extract._extract_src,
-            op_kwargs={'table_name': 'tickets'},
-        )
-
-  
-        extract_aircrafts_data 
-        extract_airports_data 
-        extract_boarding_passes 
-        extract_bookings 
-        extract_flights 
-        extract_seats 
-        extract_ticket_flights 
-        extract_tickets
 
     @task_group
     def load():
-        load_aircrafts_data = PythonOperator(
-            task_id = 'load_aircrafts_data',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'aircrafts_data'},
+        previous_task = None
+        for table_name in keys:
+            current_task = PythonOperator(
+                task_id = f'load_{table_name}',
+                python_callable = Load._load_minio,
+                trigger_rule='none_failed',
+                op_kwargs={'table_name': table_name, 'incremental': incremental}
 
-        )
-        load_airports_data = PythonOperator(
-            task_id = 'load_airports_data',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'airports_data'},
-
-        )
-
-        load_bookings = PythonOperator(
-            task_id = 'load_bookings',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'bookings'},
-
-        )
-
-
-        load_tickets = PythonOperator(
-            task_id = 'load_tickets',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'tickets'},
-
-        )
-
-        load_seats = PythonOperator(
-            task_id = 'load_seats',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'seats'},
-
-        )
-
-        load_flights = PythonOperator(
-            task_id = 'load_flights',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'flights'},
-
-        )
-        load_ticket_flights = PythonOperator(
-            task_id = 'load_ticket_flights',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'ticket_flights'},
-
-        )
-
-        load_boarding_passes = PythonOperator(
-            task_id = 'load_boarding_passes',
-            python_callable = Load._load_minio,
-            op_kwargs={'table_name': 'boarding_passes'},
-
-        )
-        load_aircrafts_data >> load_airports_data  >> load_bookings >> load_tickets >> load_seats >> load_flights >> load_ticket_flights >> load_boarding_passes
+            )
+            if previous_task:
+                    previous_task >> current_task
+        
+            previous_task = current_task
 
     @task_group
-    def transform():
-        sql_dim_aircrafts = read_sql_file(f'flights_data_pipeline/query_transform/dim_aircrafts.sql')
-        transform_dim_aircrafts = PostgresOperator(
-            task_id = 'transform_dim_aircrafts',
-            sql = sql_dim_aircrafts,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
+    def transform(**kwargs):
+  
+        previous_task = None
+        for table_name in tables_to_transform:
+            tanggal = kwargs.get('ds')
+            
+            print(f"============={tanggal}=============")
+            sql_read = read_sql_file(f'flights_data_pipeline/query_transform/{table_name}.sql')
 
-        sql_dim_airport = read_sql_file(f'flights_data_pipeline/query_transform/dim_airport.sql')
-        transform_dim_airport = PostgresOperator(
-            task_id = 'transform_dim_airport',
-            sql = sql_dim_airport,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
-        sql_dim_passenger = read_sql_file(f'flights_data_pipeline/query_transform/dim_passenger.sql')
-        transform_dim_passenger = PostgresOperator(
-            task_id = 'transform_dim_passenger',
-            sql = sql_dim_passenger,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
-        sql_dim_seat = read_sql_file(f'flights_data_pipeline/query_transform/dim_seat.sql')
-        transform_dim_seat = PostgresOperator(
-            task_id = 'transform_dim_seat',
-            sql = sql_dim_seat,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
 
-        sql_fct_boarding_pass = read_sql_file(f'flights_data_pipeline/query_transform/fct_boarding_pass.sql')
-        transform_fct_boarding_pass = PostgresOperator(
-            task_id = 'transform_fct_boarding_pass',
-            sql = sql_fct_boarding_pass,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
+            current_task = PostgresOperator(
+                task_id = f'transform_{table_name}',
+                params={"date":tanggal},
+                sql = sql_read,
+                postgres_conn_id = 'warehouse-conn',
+                trigger_rule='none_failed',
+                autocommit = True)
+            
+            if previous_task:
+                previous_task >> current_task
         
-        sql_fct_booking_ticket = read_sql_file(f'flights_data_pipeline/query_transform/fct_booking_ticket.sql')
-        transform_fct_booking_ticket = PostgresOperator(
-            task_id = 'transform_fct_booking_ticket',
-            sql = sql_fct_booking_ticket,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
-        sql_fct_flight_activity = read_sql_file(f'flights_data_pipeline/query_transform/fct_flight_activity.sql')
-        transform_fct_flight_activity = PostgresOperator(
-            task_id = 'transform_fct_flight_activity',
-            sql = sql_fct_flight_activity,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
-        sql_fct_seat_occupied_daily = read_sql_file(f'flights_data_pipeline/query_transform/fct_seat_occupied_daily.sql')
-        transform_fct_seat_occupied_daily = PostgresOperator(
-            task_id = 'transform_fct_seat_occupied_daily',
-            sql = sql_fct_seat_occupied_daily,
-            postgres_conn_id = 'dwh',
-            autocommit = True)
-        
-        transform_dim_aircrafts >> transform_dim_airport >> transform_dim_passenger >> transform_dim_seat >> transform_fct_boarding_pass >> transform_fct_booking_ticket >> transform_fct_flight_activity >> transform_fct_seat_occupied_daily
+            previous_task = current_task
 
 
     create_bucket() >> extract() >> load() >> transform()

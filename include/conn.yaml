@@ -32,7 +32,7 @@ slack-notifier:
   extra: ''
   host: ''
   login: ''
-  password: https://hooks.slack.com/services/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
+  password: "https://hooks.slack.com/services/...."
   port: null
   schema: ''
 
