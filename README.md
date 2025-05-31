@@ -72,8 +72,14 @@ Flow of Data Pipeline tasks that would be performed are:
   ```
   docker logs airflow_w2 | grep username
   ```
+  **If you face problem when it doesnt show username and password, you need to create the user first
+  ```
+  docker exec -it <<airflow container>> bash
+  airflow users create --role Admin --username <<username>> --email <<email>> --firstname <<firstname>> --lastname <<lastname>> --password <<password>>
+  ```
   - Login to airflow, open in browser localhost:8081
   - Add connection to airflow >> Screenshot saved in png directory
+  
 
 ### 4. Run DAG :
 
