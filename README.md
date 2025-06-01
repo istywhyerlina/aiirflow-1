@@ -3,7 +3,7 @@
 
 This project orchestrated an automated data pipeline that extracts data from a source database, stores it temporarily in an object store, and loads it into a data warehouse. The pipeline will be orchestrated using Apache Airflow. Apache Airflow is used for the scheduling and orchestration of data pipelines or workflows. Orchestration of data pipelines refers to the sequencing, coordination, scheduling, and managing of complex data pipelines from diverse sources. Data used in this project is from simulated flight booking system. 
 
-This project is a continuation of the previous one, [Previously](https://pages.github.com/](https://github.com/istywhyerlina/aiirflow-1/tree/week-2). he modifications to be made are as follows:
+This project is a continuation of the previous one, [Previously](https://github.com/istywhyerlina/aiirflow-1/tree/week-2). he modifications to be made are as follows:
 - Initialize all Variables and Connections.
 - Convert task declarations using Dynamic Tasks.
 - Make the pipeline more flexible by implementing Incremental Mode.
@@ -99,7 +99,7 @@ Variables can also be imported through CLI
 ### Set up a Slack Notifier
 
 Before importing variables, we need to set up the slack-notifier with SLACK. Step by step for making slack-notifier variable:
-Create workspace >> [https://api.slack.com/apps] (https://api.slack.com/apps) >> create new app >> chose the workspace >> Go to Webhook menu, create from the scratch >> Copy the Webhook link to the variabe files
+Create workspace >> [https://api.slack.com/apps](https://api.slack.com/apps) >> create new app >> chose the workspace >> Go to Webhook menu, create from the scratch >> Copy the Webhook link to the variabe files
 
 ### Convert task declarations using Dynamic Tasks
 In this part, it is required to replace all task definitions with Dynamic Tasks (Loop Based) by using variable we imported before.
