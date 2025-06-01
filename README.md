@@ -3,7 +3,14 @@
 
 This project orchestrated an automated data pipeline that extracts data from a source database, stores it temporarily in an object store, and loads it into a data warehouse. The pipeline will be orchestrated using Apache Airflow. Apache Airflow is used for the scheduling and orchestration of data pipelines or workflows. Orchestration of data pipelines refers to the sequencing, coordination, scheduling, and managing of complex data pipelines from diverse sources. Data used in this project is from simulated flight booking system. 
 
-## Architecture Description
+This project is a continuation of the previous one, [Previously](https://pages.github.com/](https://github.com/istywhyerlina/aiirflow-1/tree/week-2). he modifications to be made are as follows:
+- Initialize all Variables and Connections.
+- Convert task declarations using Dynamic Tasks.
+- Make the pipeline more flexible by implementing Incremental Mode.
+- Implement Skip Exceptions.
+- Set up a Slack Notifier.
+
+# Architecture Description
 ![Architecture](png/ss/architecture.png)
 - Docker: a containerization platform, used to manage and deploy data pipelines and applications. Services composed: airflow, Posgres as Data Source, Posgres as Data Warehouse and MinIO.
 - Minio: MinIO as data Lake. stored data extracted from data source before processed to data warehouse.
@@ -23,9 +30,7 @@ Flow of Data Pipeline tasks that would be performed are:
   Data Pipeline is orchestrated with Airflow, using PythonOperator for Extract and Load taskgroup, and PosgresOperator for Transform taskgroup. Extract task group can be executed parallel while Load and Transform traskgroup excecuted sequentially (please check DAG picture in RUN DAG section)
 
 
-## How to use this project?
-1. Preparations
-2. Run Docker Compose
+## How to use this project? (preparations)
 
 
 
@@ -67,37 +72,51 @@ Flow of Data Pipeline tasks that would be performed are:
   ```
   docker compose down --volumes && docker compose up -d
   ```
-### 3. Create connection airflow to minio and postgres :
-  - Get username and password
-  ```
-  docker logs airflow_w2 | grep username
-  ```
-  - Login to airflow, open in browser localhost:8081
-  - Add connection to airflow >> Screenshot saved in png directory
+## Modifications with Dynamic Task, conditional skipping, incremental and slack Notifier
+### Initialize all Variables and Connections (Using CLI)
 
-### 4. Run DAG :
+Before importing the connections, Let's export previous connection made through Web UI. Dont forget to mount a folder (in this case we use include folder) in airflow container to Local Computer
+```
+  docker exec -t <<airflow-container>> bash
+  airflow connections export --file-format yaml --verbose <<name-file.yaml>>
+```
 
-  - Dumped data to Minio
-    ![Dumped data to Minio](png/ss/minio.png)
+![Exporting Connections](png/export-connections.png)
+Lets Check on the local computer
+![Exported Connections in Local Computer](png/exported-connections.png)
 
-  - DAG Graphs
-    Full DAG 
-    ![Full DAG](png/ss/dag-graphs-1.png)
+To Import Connections, connection file need to be made in yaml or json format
+```
+  airflow connections import  <<name-file.yaml>>
+```
+![Importing Connections](png/import-connections.png)
+Lets Check on the Web UI
+![Imported Connections in Local Computer](png/imported-connections.png)
 
-    Extract TaskGroup
-    ![Extract DAG](png/ss/dag-graphs-2.png)
+Variables can also be imported through CLI
+![Importing Variables](png/import-variables.png)
 
-    Load TaskGroup
-    ![Load DAG](png/ss/dag-graphs-3.png)
+### Set up a Slack Notifier
 
-    Transform Taskgroup
-    ![Transform DAG](png/ss/dag-graphs-4.png)
+Before importing variables, we need to set up the slack-notifier with SLACK. Step by step for making slack-notifier variable:
+Create workspace >> [https://api.slack.com/apps] (https://api.slack.com/apps) >> create new app >> chose the workspace >> Go to Webhook menu, create from the scratch >> Copy the Webhook link to the variabe files
+
+### Convert task declarations using Dynamic Tasks
+In this part, it is required to replace all task definitions with Dynamic Tasks (Loop Based) by using variable we imported before.
+
+### Make the pipeline more flexible by implementing Incremental Mode.
+ In this part, we modify the Extract and Load processes to support daily incremental execution. Whether the process is performed incrementally or not is determined by the incremental variable previously defined.
+1. If the incremental variable is set to True, the Extract and Load processes should be performed incrementally.
+2. If it is set to False, the processes should perform a full extract and load of all data.
+
+### Implement Skip Exceptions.
+If the incremental value is True, every DAG Run, it is checking whether there is new data or not. If not, a task can be skipped.
+## Screenshot of Task
+![DAG Runs](png/DAG-dynamic-task.png)
+![Slack Notifier](png/slack-notifier.png)
 
 
-  - Example of Details Task runs
-    ![Detail 1](png/ss/detail-1.png)
-    ![Detail 2](png/ss/detail-2.png)
-    ![Detail 3](png/ss/detail-3.png)
-    ![Detail 4](png/ss/detail-4.png)
-    ![Detail 5](png/ss/detail-5.png)
+
+
+
 
