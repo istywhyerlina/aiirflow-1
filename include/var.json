@@ -5,20 +5,21 @@
     "tables_to_load": {
         "aircrafts_data": "aircraft_code",
         "airports_data": "airport_code",
-        "boarding_passes": [
-            "ticket_no",
-            "flight_id"
-        ],
         "bookings": "book_ref",
-        "flights": "flight_id",
+        "tickets": "ticket_no",
         "seats": [
             "aircraft_code",
             "seat_no"
         ],
+        "flights": "flight_id",
         "ticket_flights": [
             "ticket_no",
             "flight_id"
         ],
-        "tickets": "ticket_no"
+        "boarding_passes": [
+            "ticket_no",
+            "flight_id"
+        ]
+
     }
 }
